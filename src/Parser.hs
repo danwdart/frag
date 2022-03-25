@@ -90,9 +90,9 @@ command = giCmd ^>> notYet
 
 gDt :: SF a (Double,Double)
 gDt
-  = arr (\_ -> 1) >>>
+  = arr (const 1) >>>
           (imIntegral 0 >>> arr (\ t -> (t, t))) >>>
-         (first ((iPre 0) <<< identity) >>> arr (\ (lt, t) -> (t - lt + 0.005,t)))
+         (first (iPre 0 <<< identity) >>> arr (\ (lt, t) -> (t - lt + 0.005,t)))
 
 -- Continuous parser feed back.
 cmdString :: SF GameInput String
@@ -184,7 +184,7 @@ wiToCmd = arr (mapFilterE selChar)
                 >>> (accumBy scanChar (undefined,scanCmds) >>^ fmap fst >>^ splitE)
                 >>> hold "" *** arr (mapFilterE id)
     where
-           scanChar (_, S cont) c = cont c
+           scanChar (_, S cont) = cont
            selChar HGL.Char {HGL.char=c, HGL.isDown = True} = Just c
            selChar _                                        = Nothing
 
@@ -333,7 +333,7 @@ nextPDS pds HGL.Button {HGL.pt = p, HGL.isLeft = True, HGL.isDown = False} =
     pds {pdsPos = p', pdsDragVec = dv, pdsLeft = Nothing, pdsDrag = md}
     where
            p' = gPointToPosition2 p
-           md = (const (pdsDrag pds)) =<< (pdsRight pds)
+           md = const (pdsDrag pds) =<< pdsRight pds
            dv = maybe (pdsDragVec pds) (p' .-.) md
 nextPDS pds HGL.Button {HGL.pt = p, HGL.isLeft = False, HGL.isDown = True} =
     -- Right button pressed.
@@ -346,7 +346,7 @@ nextPDS pds HGL.Button {HGL.pt = p, HGL.isLeft = False, HGL.isDown = False} =
     pds {pdsPos = p', pdsDragVec = dv, pdsRight = Nothing, pdsDrag = md}
     where
            p' = gPointToPosition2 p
-           md = (const (pdsDrag pds)) =<< (pdsLeft pds)
+           md = const (pdsDrag pds) =<< pdsLeft pds
            dv = maybe (pdsDragVec pds) (p' .-.) md
 nextPDS pds HGL.MouseMove {HGL.pt = p} =
     -- Mouse move.

@@ -17,7 +17,7 @@ type Frustum = (FPlane,FPlane,FPlane,FPlane,FPlane,FPlane)
 
 normalisePlane :: FPlane -> IO FPlane
 normalisePlane (x,y,z,d) = do
-   let reciMag = 1/(sqrt(x*x+y*y+z*z))
+   let reciMag = 1/sqrt(x*x+y*y+z*z)
    return (x*reciMag, y*reciMag, z*reciMag, d*reciMag)
 
 

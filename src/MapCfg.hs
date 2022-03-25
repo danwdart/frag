@@ -82,7 +82,7 @@ getWeaponModel hash name = do
 readLines :: Handle -> IO [String]
 readLines handle = do
          eof <- hIsEOF handle
-         if (eof) then return [] else (do
+         if eof then return [] else (do
                    line <- hGetLine handle
                    lnes <- readLines handle
                    return (line:lnes))
@@ -109,7 +109,7 @@ lines2ObjectCons str
 
 
 lines2LevelModels :: [String] -> [LevelModel]
-lines2LevelModels strs = map read strs
+lines2LevelModels = map read
 
 
 objectCons2IntermediateObjects :: ObjectConstructor -> IntermediateObject

@@ -23,7 +23,7 @@ buildFonts = do
   fontTex <- getAndCreateTexture "font"
   textureBinding Texture2D $= fontTex
   let cxcys = [( realToFrac(x `mod` 16)/16 ,
-        (realToFrac (x `div` 16))/16)| x<-[0..(255 :: Int)]]
+        realToFrac (x `div` 16)/16)| x<-[0..(255 :: Int)]]
   mapM_ genFontList (zip cxcys lists2)
   return (fontTex,head lists)
 
@@ -88,7 +88,7 @@ renderNum x y (DisplayList base) n = unsafePreservingMatrix $ do
    alphaFunc $= Nothing
    texture Texture2D $= Disabled
    where
-      toDList c = DisplayList (base +fromIntegral((ord c)-48))
+      toDList c = DisplayList (base +fromIntegral(ord c-48))
 
 
 -- print a string starting at a 2D screen position

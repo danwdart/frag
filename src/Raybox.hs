@@ -14,7 +14,7 @@ rayBox :: (Double,Double,Double) ->  (Double,Double,Double) ->
 rayBox (rayOx,rayOy,rayOz) (rayDx,rayDy,rayDz) (minx,miny,minz)(maxx,maxy,maxz)
    | (rayOx,rayOy,rayOz) == (rayDx,rayDy,rayDz) = False
    | otherwise =
-       if ((txmin > tymax) || (tymin > txmax)) then False else intersectz
+       not ((txmin > tymax) || (tymin > txmax)) && intersectz
     where (txmin,txmax) = getT rayOx rayDx minx maxx
           (tymin,tymax) = getT rayOy rayDy miny maxy
           (tzmin,tzmax) = getT rayOz rayDz minz maxz

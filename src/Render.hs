@@ -7,18 +7,18 @@ module Render (
     GameData(..)
 ) where
 
-import MD3
-import Object
-import Graphics.Rendering.OpenGL
-import Data.IORef
-import Data.Maybe
-import Camera
-import Matrix
-import Frustum
-import BSP
-import qualified Data.HashTable.IO as HT
-import Visibility
-import TextureFonts
+import           BSP
+import           Camera
+import qualified Data.HashTable.IO         as HT
+import           Data.IORef
+import           Data.Maybe
+import           Frustum
+import           Graphics.Rendering.OpenGL
+import           Matrix
+import           MD3
+import           Object
+import           TextureFonts
+import           Visibility
 
 data GameData = GameData {
                             gamemap        :: IORefBSPMap,
@@ -42,10 +42,10 @@ renderHud gd playerState noos tme = do
    setUpOrtho $ do
           --show the framerate
           lastTime3 <- readIORef (lastDrawTime2 gd)
-          let dt = (realToFrac(tme - lastTime3))/1000
+          let dt = realToFrac(tme - lastTime3)/1000
           color $ Color4 255 255 255 (255 :: GLubyte)
           printFonts' 0 464 (fonts gd) 1 $
-                "framerate = " ++ (show ((truncate ((1/dt) :: Double)) :: Int))
+                "framerate = " ++ show ((truncate ((1/dt) :: Double)) :: Int)
 
           --print the player's score
           printFonts' 0 448 (fonts gd) 1
@@ -54,24 +54,24 @@ renderHud gd playerState noos tme = do
           --print the position of the player
           let (q,w,e) = cpos (oldCam playerState)
           printFonts' 0 432 (fonts gd) 1
-                ("position = " ++show ((truncate q :: Int),(truncate w :: Int),(truncate e :: Int)))
+                ("position = " ++show (truncate q :: Int,truncate w :: Int,truncate e :: Int))
 
           --print the number of objects
           printFonts' 0 416 (fonts gd) 1 ("No. of objs = " ++show noos)
 
           --print a message if the player has eliminated all enemies
           color $ Color4 0 255 0 (255 :: GLubyte)
-          case (score playerState) == (nems gd) && (nems gd) > 0 of
+          case score playerState == nems gd && nems gd > 0 of
                 True ->  do
                    printFonts' 96 272 (fonts gd) 1 "You've killed everybody! (You monster.)"
                    --printFonts' 248 256 (fonts gd) 1 ("Happy Now?")
                 _ -> return ()
 
           --print a message if the player has died
-          if (health playerState <= 0) then (do
+          Control.Monad.when (health playerState <= 0) $ do
                       color $ Color4 255 0 0 (255 :: GLubyte)
                       printFonts' 210 240 (fonts gd) 1 ("Oh, botheration. You died.")
-                      color $ Color4 255 255 255 (255 :: GLubyte)) else return ()
+                      color $ Color4 255 255 255 (255 :: GLubyte)
 
 
           --render the health and score of the player with big fonts
@@ -79,7 +79,7 @@ renderHud gd playerState noos tme = do
           printFonts' 4 50 (fonts gd) 1 "health"
           printFonts' 540 50 (fonts gd) 1 "score"
           color $ Color4 232 192 0 (255 :: GLubyte)
-          if (health playerState > 0) then renderNum  4 1 (nbase gd) (truncate(health playerState)) else renderNum 4 1 (nbase gd) (0)
+          if health playerState > 0 then renderNum  4 1 (nbase gd) (truncate(health playerState)) else renderNum 4 1 (nbase gd) 0
           color $ Color4 232 192 0 (255 :: GLubyte)
           renderNum  540 1      (nbase gd) (score playerState)
 
@@ -107,7 +107,7 @@ printLife font life
    | life <= 59  = do printf "(o_0)"
    | life <= 79  = do printf "(o_o)"
    | otherwise = do printf "(^_^)"
-   where printf str = printFonts' 292 32 font 1 str
+   where printf = printFonts' 292 32 font 1
 
 
 renderObjects :: IORefCamera -> HT.BasicHashTable String Model ->
@@ -133,7 +133,7 @@ renderGun cam mdels = do
           translate (Vector3 x (y+30) (z :: Double))
           let angle2 =
                     acos $ dotProd (normalise $ vectorSub (vx,0,vz) (x,0,z)) (1,0,0)
-          if (vz > z ) then rotate ((360 - (angle2*180/pi)) :: GLdouble) (Vector3 0 1 0) else rotate ((angle2*180/pi) :: GLdouble) (Vector3 0 1 0)
+          if vz > z then rotate ((360 - (angle2*180/pi)) :: GLdouble) (Vector3 0 1 0) else rotate ((angle2*180/pi) :: GLdouble) (Vector3 0 1 0)
           let angle1 =
                     acos $ dotProd (normalise $ vectorSub (vx,vy,vz) (x,y,z)) (0,1,0)
           rotate (90-(angle1*180/pi) :: GLdouble) (Vector3 0 0 1)
@@ -167,14 +167,14 @@ renderRay OOSRay {rayStart = (x1,y1,z1),
           vertex (Vertex3 x1 (y1+0.12) z1)
     depthFunc              $= Just Less
     cullFace               $= Just Front
-    if cl then (do
+    Control.Monad.when cl $ do
           cullFace                    $= Nothing
           unsafePreservingMatrix $ do
              translate (Vector3 x2 y2 z2)
              renderQuadric
                    (QuadricStyle Nothing NoTextureCoordinates Outside FillStyle)
                       (Sphere 3 12 12)
-          cullFace                    $= Just Front) else return()
+          cullFace                    $= Just Front
     color $ Color4 255 255 255 (255 :: GLubyte)
 
 
@@ -215,7 +215,7 @@ renderEnemy camRef mdels frust bspmap OOSAICube {oosOldCubePos = (x,y,z),
    --perform a test to see if the object is visible from the player's location
    cam    <- readIORef camRef
    clustVis <- isObjectVisible bspmap (cpos cam) (x,y,z)
-   if (clustVis) then (do
+   Control.Monad.when clustVis $ do
    -- a second check to see if the object is within the player's frustum
    let frusTest = boxInFrustum frust
                               (vectorAdd (x,y,z) (-sx,-sy,-sz))
@@ -248,4 +248,4 @@ renderEnemy camRef mdels frust bspmap OOSAICube {oosOldCubePos = (x,y,z),
                               drawModel (modelRef model,lowerState model)
                            currentColor $= Color4 1 1 1 (1 :: Float)
                            writeIORef (pitch model) Nothing
-      False -> return ()) else return()
+      False -> return ()

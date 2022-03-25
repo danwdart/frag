@@ -21,9 +21,9 @@ import           Game
 import           Graphics.Rendering.OpenGL
 import           Graphics.UI.GLUT
 import qualified HGL
-import           MD3
 import           MapCfg
 import           Matrix
+import           MD3
 import           Object
 import           Parser
 import           Render

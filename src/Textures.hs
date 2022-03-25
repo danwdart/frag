@@ -17,7 +17,7 @@ import           TGA                   (readTga)
 -- all images are assumed to be in the TGA image format
 getAndCreateTextures :: [String] -> IO [Maybe TextureObject]
 getAndCreateTextures fileNames = do
-   let fileNamesExts = (map (("tga/" ++) . (++ ".tga")) fileNames)
+   let fileNamesExts = map (("tga/" ++) . (++ ".tga")) fileNames
    texData <- mapM readImageC fileNamesExts
    mapM createTexture texData
 

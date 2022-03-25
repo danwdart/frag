@@ -370,7 +370,7 @@ updateTime lasttime currentframe nextframe anim presentTime =
         presentTimef = 1000*realToFrac presentTime
         elapsedtime  = presentTimef - lasttime
         t            = elapsedtime/animSpeed
-   in if ((realToFrac elapsedtime) >= animSpeed) then (t,presentTimef ,nextframe) else (t,lasttime,currentframe)
+   in if (realToFrac elapsedtime) >= animSpeed then (t,presentTimef ,nextframe) else (t,lasttime,currentframe)
 
 -------------------------------------------------------------------------------
 -- renders the model
@@ -418,16 +418,16 @@ drawObject :: AnimState -> MeshObject -> IO ()
 drawObject animState obj = do
    let curindex = currentFrame animState
    let nextIndex =        nextFrame animState
-   if (curindex /= nextIndex) then (do
+   if curindex /= nextIndex then (do
          convertToVertArray
             (currentTime animState)
-                   ((verticesp obj)!curindex)
-                          ((verticesp obj)!nextIndex)
+                   (verticesp obj!curindex)
+                          (verticesp obj!nextIndex)
                                   (vertPtr obj) 0 (numOfVerts obj)
          arrayPointer VertexArray $=
             VertexArrayDescriptor 3 Float 0 (vertPtr obj)) else (do
          arrayPointer VertexArray $=
-            VertexArrayDescriptor 3 Float 0 ((verticesp obj)!curindex))
+            VertexArrayDescriptor 3 Float 0 (verticesp obj!curindex))
 
    {-clientState VertexArray            $= Enabled
         lockArrays                              $= (Just (0, (numOfFaces obj)))-}
@@ -503,7 +503,7 @@ readMD3Skin filepath = withBinaryFile filepath $ \handle -> do
             evaluate $ force contents
             let filteredStr =  words (replace contents)
             let files = findfiles (stripTags filteredStr)
-            if (files == []) then return [] else return files
+            if files == [] then return [] else return files
 
 stripTags :: [String] -> [String]
 stripTags [] = []
@@ -524,7 +524,7 @@ readMD3Shader filepath = withBinaryFile filepath $ \handle -> do
    evaluate $ force contents
    let filteredStr =  words (replace contents)
    let files = fmap stripExt filteredStr
-   if (files == []) then return [] else return files
+   if files == [] then return [] else return files
 
 
 
@@ -633,7 +633,7 @@ readModel modelname weaponModel = do
    }
 
 -- just returns an empty animation
-noAnims :: IO (IORefAnimState)
+noAnims :: IO IORefAnimState
 noAnims = do
    let noanim =
             MD3Animation {
@@ -672,7 +672,7 @@ readMD3 filePath hashtable lns  = withBinaryFile filePath $ \handle -> do
                 let splittedTags = splitTags (numTags header) tag
                 orderedlinks      <- scanTag lns tag
                 let trimmedTags  = trimTags (fmap fst orderedlinks) splittedTags
-                let trimmedArray = listArray (0,(length trimmedTags)-1) trimmedTags
+                let trimmedArray = listArray (0,length trimmedTags-1) trimmedTags
                 aux     <- newIORef Nothing
                 aux2 <- newIORef Nothing
                 return MD3Model {
@@ -822,7 +822,7 @@ convertMesh header faceIndex texcoords vertices hashTable = do
     let keyframes       = devideIntoKeyframes (numVertices  header) scaledVerts
 
     imPTR <- mapM Foreign.Marshal.Array.newArray (fmap convertVert keyframes)
-    let facesArrayp = listArray (0,(length imPTR)-1) imPTR
+    let facesArrayp = listArray (0,length imPTR-1) imPTR
 
     uvs     <- convertTex faceIndex texcoords
     uvptr   <- Foreign.Marshal.Array.newArray (convertTex2 texcoords)
@@ -895,7 +895,7 @@ convertTex ::
           [(Float,Float)] ->
                 IO [((Float,Float),(Float,Float),(Float,Float))]
 convertTex indces uvs = do
-   let uvarray = listArray (0,(length uvs)-1) uvs
+   let uvarray = listArray (0,length uvs-1) uvs
    let uv = fmap (getUVs uvarray) indces
    return uv
 
@@ -1111,9 +1111,9 @@ readAnimations filepath = withBinaryFile filepath $ \handle -> do
                    fmap (fixLower $ startFrame (head lowerAnims)-
                                             startFrame (head upperAnims)) lowerAnims
            return (listArray
-                            (0,(length (bothAnims++upperAnims))-1)
+                            (0,length (bothAnims++upperAnims)-1)
                             (bothAnims++upperAnims),
-                         listArray (0,(length (bothAnims++fixedLower))-1)
+                         listArray (0,length (bothAnims++fixedLower)-1)
                             (bothAnims++fixedLower))
 
 
@@ -1122,8 +1122,8 @@ readAnimation line
     | null subStrings = do
                 return []
     | length subStrings >= 5 =
-          if (elem (subStrings !! 4) animList) then (do
-             let startF = (read $ subStrings!!0):: Int
+          if elem (subStrings !! 4) animList then (do
+             let startF = (read $ head subStrings):: Int
              let numF   = (read $ subStrings!!1):: Int
              let loopF  = (read $ subStrings!!2):: Int
              let f      = (read $ subStrings!!3):: Int
@@ -1138,7 +1138,7 @@ readAnimation line
     | otherwise = do
                 return []
     where
-          replc str  = fmap (replace' ['/','\n','\r']) str
+          replc = fmap (replace' ['/','\n','\r'])
           subStrings = words (replc line)
 
 
@@ -1160,7 +1160,7 @@ matchPrefix prefix anim =
 readLines :: Handle -> IO [String]
 readLines handle = do
             eof <- hIsEOF handle
-            if (eof) then return [] else (do
+            if eof then return [] else (do
                             lne <- hGetLine handle
                             lnes <- readLines handle
                             return (lne:lnes))

@@ -189,8 +189,8 @@ generateIndices tess = do
    numArrayIndicesPtr <- mallocBytes (tess * sizeOf (undefined :: GLsizei))
    pokeArray numArrayIndicesPtr (map (const (fromIntegral (2 * (tess + 1)))) [0..(tess-1)])
    indexptrptr <- mallocBytes (tess * sizeOf (undefined :: Ptr GLint))
-   let ptrPtr = [(plusPtr indexPtr)
-          ((sizeOf (undefined :: GLint)) * (row * 2 * (tess + 1))) |
+   let ptrPtr = [plusPtr indexPtr
+          (sizeOf (undefined :: GLint) * (row * 2 * (tess + 1))) |
           row <- [0 .. (tess - 1)]]
    pokeArray indexptrptr ptrPtr
    return (numArrayIndicesPtr, indexptrptr)

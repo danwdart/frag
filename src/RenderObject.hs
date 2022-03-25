@@ -4,18 +4,18 @@ module RenderObject (
     renderObjects
 ) where
 
-import MD3
-import Object
-import Graphics.UI.GLUT
-import Graphics.Rendering.OpenGL
-import Data.IORef
-import Data.Maybe
-import Camera
-import Matrix
-import Frustum
-import BSP
-import Data.HashTable
-import Visibility
+import           BSP
+import           Camera
+import           Data.HashTable
+import           Data.IORef
+import           Data.Maybe
+import           Frustum
+import           Graphics.Rendering.OpenGL
+import           Graphics.UI.GLUT
+import           Matrix
+import           MD3
+import           Object
+import           Visibility
 
 renderObjects :: IORefCamera -> HashTable String Model -> Frustum -> BSPMap  -> ObsObjState -> IO()
 renderObjects camRef models frust map oos
@@ -45,14 +45,14 @@ renderRay OOSRay {rayStart = (x1,y1,z1),
           vertex (Vertex3 x1 (y1+0.12) z1)
     depthFunc              $= Just Less
     cullFace               $= Just Front
-    if cl then (do
+    Control.Monad.when cl $ do
           cullFace                    $= Nothing
           unsafePreservingMatrix $ do
              translate (Vector3 x2 y2 z2)
              renderQuadric
                    (QuadricStyle Nothing NoTextureCoordinates Outside FillStyle)
                       (Sphere 3 12 12)
-             cullFace               $= Just Front) else return()
+             cullFace               $= Just Front
     color $ Color4 255 255 255 (255 :: GLubyte)
 
 
@@ -94,7 +94,7 @@ renderEnemy camRef models frust bspmap OOSAICube {oosOldCubePos = (x,y,z),
    --perform a test to see if the object is visible from the player's location
    cam    <- readIORef camRef
    clustVis <- isObjectVisible bspmap (cpos cam) (x,y,z)
-   if (clustVis) then (do
+   Control.Monad.when clustVis $ do
    -- a second check to see if the object is within the player's frustum
    let frusTest = boxInFrustum frust
                               (vectorAdd (x,y,z) (-sx,-sy,-sz))
@@ -127,7 +127,7 @@ renderEnemy camRef models frust bspmap OOSAICube {oosOldCubePos = (x,y,z),
                               drawModel (modelRef model,lowerState model)
                            currentColor $= Color4 1 1 1 (1 :: Float)
                            writeIORef (pitch model) Nothing
-      False -> return()) else return ()
+      False -> return()
 
 
 

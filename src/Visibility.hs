@@ -31,7 +31,7 @@ getBoxOffs (x,y,z) (x1,y1,z1) =
 
 aiVisTest :: BSPMap -> Vec3 -> Double -> Vec3 -> Int -> Bool
 aiVisTest bsp currentPos angle targetPos range =
-  if (fieldTest currentPos angle targetPos range) then rayTest bsp currentPos targetPos else False
+  fieldTest currentPos angle targetPos range && rayTest bsp currentPos targetPos
 
 
 -- test if the objct lies wihitn the field of view
@@ -45,7 +45,7 @@ fieldTest  (x,y,z) angle (ox,oy,oz) range =
     distance = sqrt (((x-ox)^(2 :: Int))+((y-oy)^(2 :: Int))+((z-oz)^(2 :: Int)))
     horizanglei =
        let ha=acos $ dotProd (normalise $ vectorSub (ox,0,oz) (x,0,z)) (1,0,0)
-       in if (oz > z) then (360 - (ha*180/pi)) else (ha*180/pi)
+       in if oz > z then 360 - (ha*180/pi) else ha*180/pi
     horizangle =
        min (abs (horizanglei - angle))  (abs (horizanglei - (angle + 360)))
     verticalangle =
@@ -62,15 +62,15 @@ rayTest bsp (x,y,z) vec2@(_,_,_) =
    v1 = vectorAdd vec2 (vectorMult (x1-x2,y1-y2,z1-z2) 45)
    v2 = vectorAdd vec2 (vectorMult (x1+x2,y1+y2,z1+z2) 45)
    v3 = vectorAdd vec2 (vectorMult (-x1-x2,-y1-y2,-z1-z2) 45)
-   in if (snd $ clipRay2 bsp vec2 (x,y,z) (0,0,0)) then (case (snd $ clipRay2 bsp v1 (x,y+30,z) (0,0,0)) of
-                                                           False -> True
-                                                           _ -> case (snd $ clipRay2 bsp v2 (x,y+30,z)(0,0,0)) of
-                                                                  False -> True
-                                                                  _ -> case (snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0)) of
-                                                                         False -> True
-                                                                         _ ->case(snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0))of
-                                                                                 False -> True
-                                                                                 True  -> False) else True
+   in not (snd $ clipRay2 bsp vec2 (x,y,z) (0,0,0)) || (case (snd $ clipRay2 bsp v1 (x,y+30,z) (0,0,0)) of
+                                                          False -> True
+                                                          _ -> case (snd $ clipRay2 bsp v2 (x,y+30,z)(0,0,0)) of
+                                                                 False -> True
+                                                                 _ -> case (snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0)) of
+                                                                        False -> True
+                                                                        _ ->case(snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0))of
+                                                                                False -> True
+                                                                                True  -> False)
 
 
 createSphere :: Double ->  CollisionType
@@ -147,7 +147,7 @@ checkBrush'  start end cType brush
                    1.0 (0,0,0) (brushSides brush)
        in case colout of
           Just (out,collided,step,grounded,startR,endR,newNorm) ->
-              if (startR < endR && startR > -1  && out) then Just (collided,step,grounded,fixRatio startR,newNorm) else Nothing
+              if startR < endR && startR > -1  && out then Just (collided,step,grounded,fixRatio startR,newNorm) else Nothing
           _ -> Nothing
      |otherwise = Nothing
      where
@@ -167,13 +167,13 @@ checkBrushSides  start@(x,_,z) end@(x1,_,z1) cType
      | startDist >  0 && endDist >  0 = Nothing
      | startDist <= 0 && endDist <= 0 = continue
      | startDist > endDist =
-           if (ratio1 > startR) then (checkBrushSides start end cType
+           if ratio1 > startR then checkBrushSides start end cType
                        checkout True mayStep grounded
-                           ratio1 endR (bsPlaneNorm b) bs) else continue
+                           ratio1 endR (bsPlaneNorm b) bs else continue
      | otherwise =
-           if (ratio2 < endR) then (checkBrushSides start end cType
+           if ratio2 < endR then checkBrushSides start end cType
                        checkout collided step ground
-                           startR ratio2 cNorm bs) else continue
+                           startR ratio2 cNorm bs else continue
      where
         checkout
             | startDist > 0 = True
