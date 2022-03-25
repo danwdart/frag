@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+
 
 {- Collision.hs; Mun Hon Cheong (mhch295@cse.unsw.edu.au) 2005
 
@@ -12,9 +12,9 @@ http://www.devmaster.net/articles/quake3collision/
 module Collision (clipCamera, clipObject, clipRay, CollisionType(..)) where
 
 
-import BSP
-import Matrix
-import Camera
+import           BSP
+import           Camera
+import           Matrix
 
 data CollisionType = Box !Vec3 !Vec3 !Vec3 | SphereT !Double
 
@@ -142,14 +142,14 @@ getBoxOffs (x,y,z) (x1,y1,z1) =
 
 getOffset :: CollisionType -> Vec3 -> Double
 getOffset (Box _ _ extents) plane = getBoxOffs extents plane
-getOffset (SphereT rad) _ = rad
+getOffset (SphereT rad) _         = rad
 
 
 fixCheck ::
    Maybe (Bool, Bool, Bool, Double, Vec3) ->
       (Bool, Bool, Bool, Double, Vec3)
 fixCheck (Just a) = a
-fixCheck Nothing = (False,False,False,1.0, (0.0,0.0,0.0))
+fixCheck Nothing  = (False,False,False,1.0, (0.0,0.0,0.0))
 
 
 -- checks if we can step across a low obstacle

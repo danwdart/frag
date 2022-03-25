@@ -51,14 +51,14 @@ module PhysicalDimensions (
     headingToBearing    -- :: Heading -> Bearing
 ) where
 
-import Data.Fixed (mod')
+import           Data.Fixed   (mod')
 
-import Data.Point2
-import Data.Point3
-import Data.Vector2
-import Data.Vector3
+import           Data.Point2
+import           Data.Point3
+import           Data.Vector2
+import           Data.Vector3
 
-import FRP.Yampa (Time, DTime)
+import           FRP.Yampa    (DTime, Time)
 
 
 -- Many of the physical dimensions below are related to time, and variables

@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+
 
 -- Camera.hs; Mun Hon Cheong (mhch295@cse.unsw.edu.au) 2005
 
@@ -6,15 +6,15 @@
 
 module Camera where
 
-import Matrix
-import PhysicalDimensions
-import Graphics.UI.GLUT
+import           Graphics.UI.GLUT
+import           Matrix
+import           PhysicalDimensions
 
-import qualified Data.Point2 as P
+import qualified Data.Point2        as P
 
-data Camera = Camera {cpos      :: !(Double,Double,Double),
-                      viewPos   :: !(Double,Double,Double),
-                      upVec     :: !(Double,Double,Double)
+data Camera = Camera {cpos    :: !(Double,Double,Double),
+                      viewPos :: !(Double,Double,Double),
+                      upVec   :: !(Double,Double,Double)
                      } deriving (Show,Read)
 
 -- initialise a camera

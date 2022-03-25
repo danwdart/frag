@@ -5,7 +5,8 @@
 
 module BitSet where
 
-import Data.Array.IO (IOUArray, newArray, writeArray, readArray, getBounds, rangeSize)
+import           Data.Array.IO (IOUArray, getBounds, newArray, rangeSize,
+                                readArray, writeArray)
 
 newtype BitSet = BitSet (IOUArray Int Bool)
 

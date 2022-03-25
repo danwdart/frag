@@ -14,13 +14,14 @@
 
 module ReadImage ( readImage ) where
 
-import Data.Word ( Word8, Word32 )
-import Control.Exception ( bracket )
-import Control.Monad ( when )
-import System.IO ( Handle, IOMode(ReadMode), openBinaryFile, hGetBuf, hClose )
-import System.IO.Error ( mkIOError, eofErrorType )
-import Foreign ( Ptr, alloca, mallocBytes, Storable(..) )
-import Graphics.UI.GLUT
+import           Control.Exception (bracket)
+import           Control.Monad     (when)
+import           Data.Word         (Word32, Word8)
+import           Foreign           (Ptr, Storable (..), alloca, mallocBytes)
+import           Graphics.UI.GLUT
+import           System.IO         (Handle, IOMode (ReadMode), hClose, hGetBuf,
+                                    openBinaryFile)
+import           System.IO.Error   (eofErrorType, mkIOError)
 
 -- This is probably overkill, but anyway...
 newtype Word32BigEndian = Word32BigEndian Word32

@@ -1,27 +1,32 @@
-{ nixpkgs ? import <unstable> {},
-  compiler ? "ghc8104" }:
+{ 
+  nixpkgs ? import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/haskell-updates.tar.gz") {},
+  haskell-tools ? import (builtins.fetchTarball "https://github.com/danwdart/haskell-tools/archive/master.tar.gz") {},
+  compiler ? "ghc922"
+} :
 let
   gitignore = nixpkgs.nix-gitignore.gitignoreSourcePure [ ./.gitignore ];
+  tools = haskell-tools compiler;
+  lib = nixpkgs.pkgs.haskell.lib;
   myHaskellPackages = nixpkgs.pkgs.haskell.packages.${compiler}.override {
     overrides = self: super: rec {
-      frag = self.callCabal2nix "frag" (gitignore ./.) {};
+      OpenGL = lib.doJailbreak super.OpenGL;
+      frag = lib.dontHaddock (self.callCabal2nix "frag" (gitignore ./.) {});
     };
   };
   shell = myHaskellPackages.shellFor {
     packages = p: [
       p.frag
     ];
-    buildInputs = [
-      nixpkgs.haskellPackages.cabal-install
-      nixpkgs.wget
-      nixpkgs.haskellPackages.stack
-      nixpkgs.haskellPackages.ghcid
-      nixpkgs.haskellPackages.stylish-haskell
-      nixpkgs.haskellPackages.hlint
-    ];
-    # withHoogle = true;
+    shellHook = ''
+      gen-hie > hie.yaml
+      for i in $(find -type f | grep -v dist-newstyle); do krank $i; done
+      doctest src lib
+      cabal update
+    '';
+    buildInputs = tools.defaultBuildTools;
+    withHoogle = false;
   };
-  exe = nixpkgs.haskell.lib.justStaticExecutables (myHaskellPackages.frag);
+  exe = lib.justStaticExecutables (myHaskellPackages.frag);
 in
 {
   inherit shell;
@@ -29,3 +34,4 @@ in
   inherit myHaskellPackages;
   frag = myHaskellPackages.frag;
 }
+

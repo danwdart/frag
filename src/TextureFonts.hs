@@ -8,11 +8,11 @@ This module handles the fonts and crosshairs of the game
 
 module TextureFonts where
 
-import Graphics.UI.GLUT
-import Textures
-import Data.Maybe
-import Data.Char
+import           Data.Char
 import qualified Data.HashTable.IO as HT
+import           Data.Maybe
+import           Graphics.UI.GLUT
+import           Textures
 
 
 -- build a display list for the fonts
@@ -22,15 +22,15 @@ buildFonts = do
   let lists2 = concat $ splitList lists
   fontTex <- getAndCreateTexture "font"
   textureBinding Texture2D $= fontTex
-  let cxcys = [((realToFrac(x `mod` 16))/16 ,
-        ((realToFrac (x `div` 16))/16))| x<-[0..(255 :: Int)]]
+  let cxcys = [( realToFrac(x `mod` 16)/16 ,
+        (realToFrac (x `div` 16))/16)| x<-[0..(255 :: Int)]]
   mapM_ genFontList (zip cxcys lists2)
   return (fontTex,head lists)
 
 
 splitList :: [DisplayList] -> [[DisplayList]]
-splitList [] = []
-splitList list = (splitList (drop 16 list))++[(take 16 list)]
+splitList []   = []
+splitList list = splitList (drop 16 list)++[take 16 list]
 
 
 -- the steps needed to display every font
@@ -88,7 +88,7 @@ renderNum x y (DisplayList base) n = unsafePreservingMatrix $ do
    alphaFunc $= Nothing
    texture Texture2D $= Disabled
    where
-      toDList c = DisplayList (base +(fromIntegral((ord c)-48)))
+      toDList c = DisplayList (base +fromIntegral((ord c)-48))
 
 
 -- print a string starting at a 2D screen position
@@ -101,7 +101,7 @@ printFonts' x y (fontTex,DisplayList _) st string =
       texture Texture2D $= Enabled
       textureBinding Texture2D $= fontTex
       translate (Vector3 x y (0::Float))
-      let lists = fmap (toDisplayList (128*(fromIntegral st))) string
+      let lists = fmap (toDisplayList (128*fromIntegral st)) string
       alphaFunc $= Just (Greater,0.1:: Float)
       mapM_ callList lists --(map DisplayList [17..(32:: GLuint)])
       alphaFunc $= Nothing

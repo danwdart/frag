@@ -1,16 +1,16 @@
 module Game where
 
-import FRP.Yampa
-import Collision
-import Raybox
-import BSP
-import Data.List
-import IdentityList
-import Object
-import Parser
-import Camera
-import Matrix
-import Visibility (aiVisTest)
+import           BSP
+import           Camera
+import           Collision
+import           Data.List
+import           FRP.Yampa
+import           IdentityList
+import           Matrix
+import           Object
+import           Parser
+import           Raybox
+import           Visibility   (aiVisTest)
 
 game :: BSPMap -> [ILKey -> Object] -> SF GameInput [ObsObjState]
 game bspmap objs
@@ -121,7 +121,7 @@ clip mp gi
                oiVisibleObjs = noEvent, oiGameInput = gi}
 
 listToEvent :: [a] -> Event [a]
-listToEvent [] = noEvent
+listToEvent []   = noEvent
 listToEvent list = Event list
 
 eventToList :: Event [a] -> [a]

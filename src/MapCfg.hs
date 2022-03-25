@@ -9,20 +9,19 @@ reads the level configuration files and map media files
 
 module MapCfg where
 
-import BSP
-import Camera
-import Control.Exception ( bracket )
+import           BSP
+import           Camera
+import           Control.Exception (bracket)
 import qualified Data.HashTable.IO as HT
-import Data.IORef
-import Data.List (find)
-import Data.Maybe
-import IdentityList
-import MD3
-import Object
-import Object
-import ObjectBehavior
-import Prelude
-import System.IO hiding (withBinaryFile)
+import           Data.IORef
+import           Data.List         (find)
+import           Data.Maybe
+import           IdentityList
+import           MD3
+import           Object
+import           ObjectBehavior
+import           Prelude
+import           System.IO         hiding (withBinaryFile)
 
 
 data ObjectConstructor =
@@ -41,7 +40,7 @@ readMapCfg filepath = withBinaryFile filepath $ \handle -> do
    let objects  = map lines2ObjectCons lnes
    return $ map objectCons2IntermediateObjects objects
 
-readMapMedia :: FilePath -> IO (IORef BSPMap,(HT.BasicHashTable String Model))
+readMapMedia :: FilePath -> IO (IORef BSPMap,HT.BasicHashTable String Model)
 readMapMedia filepath = withBinaryFile filepath $ \handle -> do
    lnes <- readLines handle
    print lnes
@@ -83,12 +82,10 @@ getWeaponModel hash name = do
 readLines :: Handle -> IO [String]
 readLines handle = do
          eof <- hIsEOF handle
-         case (eof) of
-           False -> do
-                     line <- hGetLine handle
-                     lnes <- readLines handle
-                     return (line:lnes)
-           _     -> return []
+         if (eof) then return [] else (do
+                   line <- hGetLine handle
+                   lnes <- readLines handle
+                   return (line:lnes))
 
 withBinaryFile :: FilePath -> (Handle -> IO a) -> IO a
 withBinaryFile filePath = bracket (openBinaryFile filePath ReadMode) hClose
@@ -112,14 +109,13 @@ lines2ObjectCons str
 
 
 lines2LevelModels :: [String] -> [LevelModel]
-lines2LevelModels [] = []
-lines2LevelModels (str:strs) = (read str): (lines2LevelModels  strs)
+lines2LevelModels strs = map read strs
 
 
 objectCons2IntermediateObjects :: ObjectConstructor -> IntermediateObject
 objectCons2IntermediateObjects (ConsCamera cam) =
    ICamera (camera cam)
-objectCons2IntermediateObjects c@(ConsAICube {}) =
+objectCons2IntermediateObjects c@ConsAICube {} =
    IAICube
      (aicube (startPosition c) (size c) (wayPoints c)(modlName c)) (modlName c)
 
@@ -127,8 +123,7 @@ objectCons2IntermediateObjects c@(ConsAICube {}) =
 toCompleteObjects ::
    [(String, AnimState, AnimState)] ->
       [IntermediateObject] -> [ILKey->Object]
-toCompleteObjects animList iobjs =
-   map (toCompleteObject animList) iobjs
+toCompleteObjects animList = map (toCompleteObject animList)
 
 
 toCompleteObject ::
@@ -147,7 +142,7 @@ findModelAnim ::
 findModelAnim name anms = (ua,la)
    where
       (_,ua,la) =
-          fromJust $ find (\(x,_,_)->(x==name)) anms
+          fromJust $ find (\(x,_,_)->x==name) anms
 
 
 

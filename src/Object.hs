@@ -14,32 +14,32 @@ module Object (
     isCamera,       -- :: ObsObjState -> Bool
 ) where
 
-import Control.DeepSeq (NFData(..), force)
+import           Control.DeepSeq (NFData (..), force)
 
-import FRP.Yampa (SF, Event)
-import Camera
-import IdentityList
-import MD3 (AnimState)
-import Parser (GameInput)
+import           Camera
+import           FRP.Yampa       (Event, SF)
+import           IdentityList
+import           MD3             (AnimState)
+import           Parser          (GameInput)
 
 
 type Object = SF ObjInput ObjOutput
 
 data ObjInput = ObjInput {
-          oiHit           :: !(Event [(ILKey,ObsObjState)]),
-          oiMessage       :: !(Event [(ILKey,Message)]),
-          oiCollision     :: !Camera,
+          oiHit          :: !(Event [(ILKey,ObsObjState)]),
+          oiMessage      :: !(Event [(ILKey,Message)]),
+          oiCollision    :: !Camera,
           oiCollisionPos :: !(Double,Double,Double),
-          oiOnLand        :: !Bool,
-          oiGameInput     :: !GameInput,
+          oiOnLand       :: !Bool,
+          oiGameInput    :: !GameInput,
           oiVisibleObjs  :: !(Event [(ILKey,ObsObjState)])
         }
 
 data ObjOutput = ObjOutput {
     ooObsObjState :: !ObsObjState,
     ooSendMessage :: !(Event [(ILKey,(ILKey,Message))]),
-    ooKillReq      :: (Event ()),
-    ooSpawnReq    :: (Event [ILKey->Object])
+    ooKillReq     :: Event (),
+    ooSpawnReq    :: Event [ILKey->Object]
 }
 
 data Message = Coord !(Double,Double,Double) |
@@ -53,37 +53,37 @@ data Message = Coord !(Double,Double,Double) |
 
 data ObsObjState =
     OOSCamera {
-          newCam          ::  !Camera,
-          oldCam          ::  !Camera,
-          health          ::  !Double,
-          ammo    ::  !Double,
-          score   ::  !Int,
-          cood    ::  ![(Double,Double,Double)]
+          newCam ::  !Camera,
+          oldCam ::  !Camera,
+          health ::  !Double,
+          ammo   ::  !Double,
+          score  ::  !Int,
+          cood   ::  ![(Double,Double,Double)]
          }
     | OOSRay {
-          rayStart ::    !(Double,Double,Double),
-          rayEnd         ::      !(Double,Double,Double),
-          rayUC  ::      !(Double,Double,Double),
-          clipped  ::    !Bool,
+          rayStart  ::    !(Double,Double,Double),
+          rayEnd    ::      !(Double,Double,Double),
+          rayUC     ::      !(Double,Double,Double),
+          clipped   ::    !Bool,
           firedFrom :: !ILKey
          }
     | OOSProjectile {
           projectileOldPos :: !(Double,Double,Double),
           projectileNewPos :: !(Double,Double,Double),
-          firedFrom :: !ILKey
+          firedFrom        :: !ILKey
          }
     | OOSWayPoint !(Double,Double,Double)
     | OOSAICube {
-          oosOldCubePos  :: !(Double,Double,Double),
-          oosNewCubePos  :: !(Double,Double,Double),
-          oosCubeSize     :: !(Double,Double,Double),
-          oosCubeAngle :: !Double,
-          oosCubePitch :: !Double,
+          oosOldCubePos :: !(Double,Double,Double),
+          oosNewCubePos :: !(Double,Double,Double),
+          oosCubeSize   :: !(Double,Double,Double),
+          oosCubeAngle  :: !Double,
+          oosCubePitch  :: !Double,
           upperAnim     :: !AnimState,
           lowerAnim     :: !AnimState,
-          health                :: !Double,
+          health        :: !Double,
           modelName     :: !String,
-          target                :: !(Double,Double,Double),
+          target        :: !(Double,Double,Double),
           fade          :: !Float
          }
 
@@ -92,18 +92,18 @@ instance NFData ObsObjState where
     rnf !_ = ()
 
 isRay :: ObsObjState -> Bool
-isRay (OOSRay {}) = True
-isRay _            = False
+isRay OOSRay {} = True
+isRay _         = False
 
 isCamera :: ObsObjState -> Bool
-isCamera (OOSCamera {}) = True
-isCamera _                      = False
+isCamera OOSCamera {} = True
+isCamera _            = False
 
 isAICube :: ObsObjState -> Bool
-isAICube (OOSAICube {}) = True
-isAICube _                 = False
+isAICube OOSAICube {} = True
+isAICube _            = False
 
 isProjectile :: ObsObjState -> Bool
-isProjectile (OOSProjectile {}) = True
-isProjectile _            = False
+isProjectile OOSProjectile {} = True
+isProjectile _                = False
 

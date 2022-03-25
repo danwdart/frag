@@ -7,29 +7,29 @@ Main module
 module Main where
 
 
-import TextureFonts
-import Graphics.UI.GLUT
-import Graphics.Rendering.OpenGL
-import Data.IORef
-import Data.Maybe
-import Control.DeepSeq (force)
-import Control.Monad
+import           BSP
+import           Camera
+import           Control.DeepSeq           (force)
+import           Control.Monad
+import qualified Data.HashTable.IO         as HT
+import           Data.IORef
+import           Data.List                 (find)
+import           Data.Maybe
+import           FRP.Yampa
+import           Frustum
+import           Game
+import           Graphics.Rendering.OpenGL
+import           Graphics.UI.GLUT
 import qualified HGL
-import FRP.Yampa
-import Game
-import Parser
-import Object
-import BSP
-import Camera
-import System.Exit (exitSuccess)
-import Matrix
-import MD3
-import qualified Data.HashTable.IO as HT
-import Frustum
-import Data.List (find)
-import Textures
-import MapCfg
-import Render
+import           MD3
+import           MapCfg
+import           Matrix
+import           Object
+import           Parser
+import           Render
+import           System.Exit               (exitSuccess)
+import           TextureFonts
+import           Textures
 
 msInterval :: Int
 msInterval = 16
@@ -38,10 +38,10 @@ clkRes :: Double
 clkRes = 1000
 
 data Input
-  = KBMInput  { key :: Key,
-                         keyState :: KeyState,
+  = KBMInput  { key                :: Key,
+                         keyState  :: KeyState,
                          modifiers :: Modifiers,
-                         pos :: Position}
+                         pos       :: Position}
   | MouseMove { pos :: Position }
  deriving Show
 
@@ -186,7 +186,7 @@ initr lasttime newInput inpState = do
          writeIORef lasttime 1
          (_, inp) <- getWinInput (lasttime, newInput)  inpState True tme
          case inp of
-            Just i -> return i
+            Just i  -> return i
             Nothing -> return (noEvent,noEvent)
 
 -------------------------------------------------------------------------------
@@ -221,7 +221,7 @@ render gd oos = do
                     let playerState = findCam oos
                     case cood playerState of
                          [] -> return ()
-                         _ -> print (getPos (cood playerState))
+                         _  -> print (getPos (cood playerState))
                     let cam = setCam playerState
                     writeIORef (camera gd) cam
                     cameraLook cam
@@ -400,12 +400,12 @@ pos2Point (Position a b) = HGL.Point (fromIntegral a, fromIntegral b)
 
 isMBLeft :: Key -> Bool
 isMBLeft (MouseButton LeftButton) = True
-isMBLeft _ = False
+isMBLeft _                        = False
 
 
 isKeyDown :: KeyState -> Bool
 isKeyDown Down = True
-isKeyDown _     = False
+isKeyDown _    = False
 
 
 filter :: Eq a => a -> a -> Maybe a

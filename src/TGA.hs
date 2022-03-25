@@ -19,17 +19,18 @@ with its pixels upside down.
 
 module TGA where
 
-import Data.Word ( Word8 )
-import Control.Exception ( bracket )
-import System.IO ( Handle, IOMode(ReadMode), openBinaryFile, hGetBuf, hClose )
-import Foreign.Marshal.Array (peekArray, pokeArray)
-import Foreign.Marshal.Alloc (free, mallocBytes)
-import Foreign.Ptr (plusPtr, Ptr())
-import Graphics.UI.GLUT -- (Size, PixelData, UnsignedByte, PixelFormat, RGBA, RGB)
+import           Control.Exception     (bracket)
+import           Data.Word             (Word8)
+import           Foreign.Marshal.Alloc (free, mallocBytes)
+import           Foreign.Marshal.Array (peekArray, pokeArray)
+import           Foreign.Ptr           (Ptr, plusPtr)
+import           Graphics.UI.GLUT
+import           System.IO             (Handle, IOMode (ReadMode), hClose,
+                                        hGetBuf, openBinaryFile)
 
 
 withBinaryFile' :: FilePath -> (Handle -> IO a) -> IO a
-withBinaryFile' filePath = bracket (openBinaryFile filePath ReadMode) hClose
+withBinaryFile' filePath = withBinaryFile filePath ReadMode
 
 -- reads a *.tga file
 readTga :: FilePath -> IO (Maybe (Size, PixelData Word8))
@@ -41,11 +42,11 @@ readTga filePath =
    hGetBuf handle buf 6
    hGetBuf handle buf 6
    header <- peekArray 6 buf
-   let w1       = (fromIntegral (header!!1))*256 :: Int
-   let width    = w1 + (fromIntegral (header!!0))
-   let h1       = (fromIntegral (header!!3))*256 :: Int
-   let height   = h1 + (fromIntegral (header!!2))
-   let bitspp   = (fromIntegral (header!!4))
+   let w1       = fromIntegral (header!!1)*256 :: Int
+   let width    = w1 + fromIntegral (header!!0)
+   let h1       = fromIntegral (header!!3)*256 :: Int
+   let height   = h1 + fromIntegral (header!!2)
+   let bitspp   = fromIntegral (header!!4)
    let numBytes = (bitspp `div` 8) * width * height
    --allocate memory for the image
    image <- mallocBytes numBytes
@@ -65,8 +66,8 @@ readTga filePath =
 swapBytes' :: Ptr Word8 -> Int -> Int -> IO()
 swapBytes' image bytespp size =
    case bytespp of
-      3 -> do mapM_ (swapByteRGB.(plusPtr image).(bytespp*)) [0..(size-1)]
-      _ -> do mapM_ (swapByteRGBA.(plusPtr image).(bytespp*)) [0..(size-1)] -- 4
+      3 -> do mapM_ (swapByteRGB.plusPtr image.(bytespp*)) [0..(size-1)]
+      _ -> do mapM_ (swapByteRGBA.plusPtr image.(bytespp*)) [0..(size-1)] -- 4
 
 -- converts from bgr to rgb
 swapByteRGB :: Ptr Word8 -> IO()
@@ -81,11 +82,11 @@ swapByteRGBA ptr = do
    pokeArray ptr [r,g,b,a]
 
 -- returns the pixel format given the bits per pixel
-getFormat :: Int ->  IO(PixelFormat)
+getFormat :: Int ->  IOPixelFormat
 getFormat bpp = do
    case bpp of
       32 ->  return RGBA
-      _ ->  return RGB -- 24
+      _  ->  return RGB -- 24
 
 
 

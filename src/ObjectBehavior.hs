@@ -2,21 +2,21 @@
 
 module ObjectBehavior (aicube, camera) where
 
-import Data.Maybe (fromJust)
+import           Data.Maybe   (fromJust)
 
-import FRP.Yampa
-import Camera
-import IdentityList
-import MD3
-import Matrix
-import Object
-import Parser
+import           Camera
+import           FRP.Yampa
+import           IdentityList
+import           MD3
+import           Matrix
+import           Object
+import           Parser
 
 ray ::
     (Double, Double, Double) ->
       (Double, Double, Double) -> ILKey -> ILKey -> Object
 ray (!x, !y, !z) (!vx, !vy, !vz) firedfrom iD
-  = (arr
+  = arr
        (\ oi ->
           let clippedPos = oiCollisionPos oi in
             let grounded = oiOnLand oi in ((), (clippedPos, grounded)))
@@ -61,7 +61,7 @@ ray (!x, !y, !z) (!vx, !vy, !vz) firedfrom iD
                                               firedFrom = firedfrom},
                                      ooKillReq = timeout, ooSpawnReq = noEvent,
                                      ooSendMessage =
-                                       clipev `tag` [(firedfrom, (iD, Coord clip))]})))
+                                       clipev `tag` [(firedfrom, (iD, Coord clip))]}))
   where (start, end) = firePos (x, y, z) (vx, vy, vz)
         (_, _, _) = normalise $ vectorSub end start
         not0 c
@@ -70,7 +70,7 @@ ray (!x, !y, !z) (!vx, !vy, !vz) firedfrom iD
 
 projectile :: (Vec3, Vec3) -> ILKey -> ILKey -> Object
 projectile ((sx, sy, sz), (vx, vy, vz)) firedfrom _
-  = (arr
+  = arr
        (\ oi ->
             let grounded = oiOnLand oi in
               let hits = oiHit oi in (hits, grounded))
@@ -105,14 +105,14 @@ projectile ((sx, sy, sz), (vx, vy, vz)) firedfrom _
                                                      projectileNewPos = (x, y, z),
                                                      firedFrom = firedfrom},
                                      ooKillReq = hitEv, ooSpawnReq = noEvent,
-                                     ooSendMessage = noEvent})))
+                                     ooSendMessage = noEvent}))
 
 camera ::
        Camera ->
          [(String, AnimState, AnimState)] ->
            [(ILKey, Message)] -> ILKey -> Object
 camera cam _ _ iD
-  = (arr
+  = arr
        (\ oi ->
           let gi = oiGameInput oi in
             let clippedcam = oiCollision oi in
@@ -358,7 +358,7 @@ camera cam _ _ iD
                                                                                (head
                                                                                   (findEnemies
                                                                                      (event2List
-                                                                                        msges)))])})))
+                                                                                        msges)))])}))
 
 event2List :: Event [a] -> [a]
 event2List ev
@@ -368,21 +368,19 @@ event2List ev
 getMsg0 ::
         Event [(ILKey, Message)] ->
           [(ILKey, Message)] -> [(ILKey, Message)]
-getMsg0 (ev) ls
-  = case (isEvent ev) of
-        True -> case ((findCoords (fromEvent ev)) ++ ls) of
-                    x -> x
-        _ -> ls
+getMsg0 ev ls
+  = if (isEvent ev) then (case ((findCoords (fromEvent ev)) ++ ls) of
+                              x -> x) else ls
 
 findKills :: [(ILKey, Message)] -> [ILKey]
-findKills ((k, EnemyDown) : kmsgs) = k : (findKills kmsgs)
-findKills ((_, _) : kmsgs) = (findKills kmsgs)
-findKills [] = []
+findKills ((k, EnemyDown) : kmsgs) = k : findKills kmsgs
+findKills ((_, _) : kmsgs)         = findKills kmsgs
+findKills []                       = []
 
 findEnemies :: [(ILKey, Message)] -> [ILKey]
-findEnemies ((k, PlayerLockedOn) : kmsgs) = k : (findEnemies kmsgs)
-findEnemies ((_, _) : kmsgs) = (findEnemies kmsgs)
-findEnemies [] = []
+findEnemies ((k, PlayerLockedOn) : kmsgs) = k : findEnemies kmsgs
+findEnemies ((_, _) : kmsgs)              = findEnemies kmsgs
+findEnemies []                            = []
 
 toTargetPosition ::
                  ILKey -> Vec3 -> ILKey -> (ILKey, (ILKey, Message))
@@ -391,13 +389,13 @@ toTargetPosition iD position contact
 
 findCoords :: [(ILKey, Message)] -> [(ILKey, Message)]
 findCoords ((k, Coord x) : kmsgs)
-  = (k, Coord x) : (findCoords kmsgs)
+  = (k, Coord x) : findCoords kmsgs
 findCoords ((_, _) : kmsgs) = findCoords kmsgs
 findCoords [] = []
 
 getCoordFromMsg :: (ILKey, Message) -> Vec3
-getCoordFromMsg (_, (Coord xyz)) = xyz
-getCoordFromMsg _                = (0,0,0)
+getCoordFromMsg (_, Coord xyz) = xyz
+getCoordFromMsg _              = (0,0,0)
 
 aicube ::
        (Double, Double, Double) ->
@@ -405,7 +403,7 @@ aicube ::
            [(Double, Double, Double)] ->
              String -> (AnimState, AnimState) -> ILKey -> Object
 aicube (x, y, z) size waypoints modelname (ua, la) iD
-  = (((arr (\ oi -> let gi = oiGameInput oi in (gi, oi)) >>>
+  = ((arr (\ oi -> let gi = oiGameInput oi in (gi, oi)) >>>
          first getT)
         >>>
         arr
@@ -419,7 +417,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
              (\ hitList ->
                 case (isEvent hitList) of
                     True -> getFire (snd (head (fromEvent hitList)))
-                    _ -> Nothing)
+                    _    -> Nothing)
              >>> (iPre Nothing <<< identity))
           >>>
           arr
@@ -439,7 +437,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                      (arr
                         (\ (currentHealth, hitList) ->
                            case (isEvent hitList) of
-                               True -> currentHealth - (3)
+                               True  -> currentHealth - (3)
                                False -> currentHealth)
                         >>> ((iPre 100) <<< identity))
                      >>>
@@ -469,7 +467,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                           (\ (hitev, isDead) ->
                              case (isEvent hitev) of
                                  True -> True
-                                 _ -> isDead)
+                                 _    -> isDead)
                           >>> ((iPre False) <<< identity))
                        >>>
                        arr
@@ -509,7 +507,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                           (arr
                              (\ (enemy, enemySighted) ->
                                 case (isEvent enemySighted) of
-                                    True -> enemySighted
+                                    True  -> enemySighted
                                     False -> enemy)
                              >>> ((iPre noEvent) <<< identity))
                           >>>
@@ -575,7 +573,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                           case (isEvent msgs) && (isDead == False) of
                               True -> case (getTargetPosition (fromEvent msgs)) of
                                           Just _ -> True
-                                          _ -> False
+                                          _      -> False
                               _ -> False)
                        >>> edge)
                     >>>
@@ -594,7 +592,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                             case (isEvent msgs) && (isDead == False) of
                                 True -> case (getTargetPosition2 (fromEvent msgs)) of
                                             Just _ -> True
-                                            _ -> False
+                                            _      -> False
                                 _ -> False)
                          >>> edge)
                       >>>
@@ -719,7 +717,7 @@ aicube (x, y, z) size waypoints modelname (ua, la) iD
                                               `tag`
                                               [(fst (head (fromEvent enemy)), (iD, PlayerLockedOn))]
                                               `lMerge` hitev1
-                                              `tag` [(fromJust hitSource, (iD, PlayerLockedOn2))]}))
+                                              `tag` [(fromJust hitSource, (iD, PlayerLockedOn2))]})
 
 getFire :: ObsObjState -> Maybe ILKey
 getFire obj
@@ -728,28 +726,28 @@ getFire obj
 
 getTargetPosition :: [(ILKey, Message)] -> Maybe Vec3
 getTargetPosition ((_, TargetPosition pos) : _) = Just pos
-getTargetPosition (_ : rest) = getTargetPosition rest
-getTargetPosition [] = Nothing
+getTargetPosition (_ : rest)                    = getTargetPosition rest
+getTargetPosition []                            = Nothing
 
 getTargetPosition2 :: [(ILKey, Message)] -> Maybe Vec3
 getTargetPosition2 ((_, TargetPosition2 pos) : _) = Just pos
-getTargetPosition2 (_ : rest) = getTargetPosition2 rest
-getTargetPosition2 [] = Nothing
+getTargetPosition2 (_ : rest)                     = getTargetPosition2 rest
+getTargetPosition2 []                             = Nothing
 
 getMuzzlePoint :: (Vec3, Vec3) -> (Vec3, Vec3)
 getMuzzlePoint ((x, y, z), (ox, oy, oz))
   = let (x3, _, z3)
-          = normalise $ (vectorSub (ox, oy + 45, oz) (x, y, z))
-        (x7, _, z7) = normalise $ (vectorSub (ox, 0, oz) (x, 0, z))
+          = normalise (vectorSub (ox, oy + 45, oz) (x, y, z))
+        (x7, _, z7) = normalise (vectorSub (ox, 0, oz) (x, 0, z))
         (x4, _, z4) = normalise $ crossProd (x3, 0, z3) (0, 1, 0)
         (x5, y5, z5)
-          = (x + (x7 * (- 18.55)) + (x4 * (9.6)), y + 4,
-             z + (z7 * (- 18.55)) + (z4 * (9.6)))
+          = (x + (x7 * (- 18.55)) + (x4 * 9.6), y + 4,
+             z + (z7 * (- 18.55)) + (z4 * 9.6))
         (x12, y12, z12)
-          = normalise $ (vectorSub (ox, oy - 5, oz) (x, y, z))
+          = normalise (vectorSub (ox, oy - 5, oz) (x, y, z))
         (x6, y6, z6)
           = vectorAdd (x5, y5, z5) (x12 * 42, y12 * 42, z12 * 42)
-        (x9, y9, z9) = normalise $ (vectorSub (x6, y6, z6) (x5, y5, z5))
+        (x9, y9, z9) = normalise (vectorSub (x6, y6, z6) (x5, y5, z5))
         (x10, y10, z10) = normalise $ crossProd (x9, y9, z9) (0, 1, 0)
         (x13, y13, z13)
           = normalise $ crossProd (x9, y9, z9) (x10, y10, z10)
@@ -759,25 +757,25 @@ getMuzzlePoint ((x, y, z), (ox, oy, oz))
         muzzleEnd
           = vectorAdd (x5, y5, z5)
               (x13 * (- 9.5), y13 * (- 9.5), z13 * (- 9.5))
-        fireVec = normalise $ (vectorSub muzzlePoint muzzleEnd)
+        fireVec = normalise (vectorSub muzzlePoint muzzleEnd)
       in (muzzlePoint, fireVec)
 
 falling :: SF (Bool, GameInput, Double) Double
 falling
-  = (loop
+  = loop
        (arr
           (\ ((lnd, _, dt), pos) ->
              case lnd of
-                 True -> (- 0.5)
+                 True  -> (- 0.5)
                  False -> (pos - (6 * 200 * dt)))
-          >>> (((iPre 0) <<< identity) >>> arr (\ pos -> (pos, pos)))))
+          >>> (((iPre 0) <<< identity) >>> arr (\ pos -> (pos, pos))))
 
 turnToFaceTarget ::
                  (Vec3, Double) ->
                    SF (ObjInput, Event (), Event ())
                      (Vec3, Vec3, Double, Double, Event (), (Int, Int))
 turnToFaceTarget (currentPos, initialAngle)
-  = (arr
+  = arr
        (\ (oi, ev1, ev2) ->
           let gi = oiGameInput oi in
             let clippedPos = oiCollisionPos oi in
@@ -809,7 +807,7 @@ turnToFaceTarget (currentPos, initialAngle)
                  (\ (count, ox1, oy1, oz1) ->
                     case (count > (3 :: Int) && (ox1, oy1, oz1) /= currentPos) of
                         True -> (ox1, oy1, oz1)
-                        _ -> currentPos)
+                        _    -> currentPos)
                  >>> identity)
               >>>
               arr
@@ -857,7 +855,7 @@ turnToFaceTarget (currentPos, initialAngle)
                                      (abs (angle - targetAnglei) <
                                         abs (angle - (targetAnglei + 360)))
                                      of
-                                       True -> targetAnglei
+                                       True  -> targetAnglei
                                        False -> targetAnglei + 360
                              in
                              let angularV
@@ -865,7 +863,7 @@ turnToFaceTarget (currentPos, initialAngle)
                                          True -> case (abs (angle - targetAngle) > 2) of
                                                      True -> case (angle < targetAngle) of
                                                                  True -> 270
-                                                                 _ -> - 270
+                                                                 _    -> - 270
                                                      False -> (targetAngle - angle)
                                          False -> 0
                                in
@@ -879,7 +877,7 @@ turnToFaceTarget (currentPos, initialAngle)
                                 let legState
                                       = case (abs (angle - targetAngle) < 2) of
                                             True -> idleLegs
-                                            _ -> turn
+                                            _    -> turn
                                   in
                                   ((ev2, legState),
                                    (angle, enemySighted, ev1, legState, ox, oy, oz, targetAngle,
@@ -966,7 +964,7 @@ turnToFaceTarget (currentPos, initialAngle)
                                = case (abs (ptch - targetPitch) > 2) of
                                      True -> case (targetPitch < ptch) of
                                                  True -> - 90
-                                                 _ -> 90
+                                                 _    -> 90
                                      False -> (targetPitch - ptch)
                            in
                            (angularVP,
@@ -1008,7 +1006,7 @@ turnToFaceTarget (currentPos, initialAngle)
                             ((abs (ptch - targetPitch) < 6) && (abs (angle - targetAngle) < 6)
                                && isEvent enemySighted)
                             of
-                              True -> attack1
+                              True  -> attack1
                               False -> stand)
                        >>> ((iPre stand) <<< identity))
                     >>>
@@ -1016,7 +1014,7 @@ turnToFaceTarget (currentPos, initialAngle)
                       (\ (torsoAnim, (angle, attack, legsAnim, ox, oy, oz, ptch, yVel))
                          ->
                          ((ox, oy + yVel, oz), (ox, oy, oz), angle, ptch, attack,
-                          (torsoAnim, legsAnim)))))
+                          (torsoAnim, legsAnim))))
 
 followWayPoints ::
                 Vec3 ->
@@ -1024,7 +1022,7 @@ followWayPoints ::
                     SF (ObjInput, Event (), Event ())
                       (Vec3, Vec3, Double, Double, Event (), (Int, Int))
 followWayPoints (x, y, z) waypoints
-  = (arr
+  = arr
        (\ (oi, ev1, ev2) ->
           let gi = oiGameInput oi in
             let clippedPos = oiCollisionPos oi in
@@ -1108,29 +1106,29 @@ followWayPoints (x, y, z) waypoints
                                 True -> angle
                                 _ -> case notturning of
                                          False -> turnAngle
-                                         _ -> angle
+                                         _     -> angle
                       in
                       let legAnim
                             = case (not largeEnough) of
                                   True -> walk
                                   _ -> case (notturning) of
                                            True -> walk
-                                           _ -> turn
+                                           _    -> turn
                         in
-                        (newPos, (ox, oy, oz), holdAngle, 0, noEvent, (stand, legAnim))))
+                        (newPos, (ox, oy, oz), holdAngle, 0, noEvent, (stand, legAnim)))
 
 turnToNextWp ::
              Double ->
                Double -> SF (ObjInput, Event (), Event ()) (Bool, Bool, Double)
 turnToNextWp currentangle nextAngle
-  = (((arr
+  = ((arr
          (\ (_, _, lev) ->
             let targetAngle
                   = case
                       (abs (currentangle - nextAngle) <
                          abs (currentangle - (nextAngle + 360)))
                       of
-                        True -> nextAngle
+                        True  -> nextAngle
                         False -> nextAngle + 360
               in (lev, targetAngle))
          >>>
@@ -1141,7 +1139,7 @@ turnToNextWp currentangle nextAngle
                        = case (abs (angle - targetAngle) > 3) of
                              True -> case (angle < targetAngle) of
                                          True -> 360
-                                         _ -> - 360
+                                         _    -> - 360
                              False -> (targetAngle - angle)
                    in (angularV, (lev, targetAngle)))
               >>>
@@ -1155,7 +1153,7 @@ turnToNextWp currentangle nextAngle
              let legState
                    = case (abs (angle - targetAngle) < 3) of
                          True -> idleLegs
-                         _ -> turn
+                         _    -> turn
                in ((legState, lev), (angle, targetAngle))))
        >>>
        (first
@@ -1168,7 +1166,7 @@ turnToNextWp currentangle nextAngle
          >>>
          arr
            (\ (ret, (angle, targetAngle)) ->
-              (ret, (abs (currentangle - targetAngle) > 30), angle)))
+              (ret, (abs (currentangle - targetAngle) > 30), angle))
 
 stepdist ::
          Vec3 -> Vec3 -> Vec3 -> Double -> Double -> (Bool, Vec3)
@@ -1177,9 +1175,7 @@ stepdist (wx1, _, wz1) (_, _, _) (x, _, z) vel dt
         distance = sqrt (((x - wx1) * (x - wx1)) + ((z - wz1) * (z - wz1)))
         remvel = distance * (distance / (vel * dt))
       in
-      case (distance > (vel * dt)) of
-          True -> (False, (dx * vel * dt, 0, dz * vel * dt))
-          False -> (True, (dx * remvel, 0, dz * remvel))
+      if (distance > (vel * dt)) then (False, (dx * vel * dt, 0, dz * vel * dt)) else (True, (dx * remvel, 0, dz * remvel))
 
 playDead ::
          Vec3 ->
@@ -1187,11 +1183,11 @@ playDead ::
              SF (ObjInput, Event (), Event ())
                (Vec3, Vec3, Double, Double, Event (), (Int, Int))
 playDead start angle
-  = (arr (\ (_, ev1, _) -> ev1) >>>
+  = arr (\ (_, ev1, _) -> ev1) >>>
        (notYet >>> arr (\ ev -> ((), ev `tag` (constant dead1)))) >>>
          (drSwitch (constant death1) >>>
             arr
-              (\ death -> (start, start, angle, 0, noEvent, (death, death)))))
+              (\ death -> (start, start, angle, 0, noEvent, (death, death))))
 
 getAngle :: (Vec3, Vec3) -> Double
 getAngle ((x, _, z), (vx, _, vz))
@@ -1199,9 +1195,7 @@ getAngle ((x, _, z), (vx, _, vz))
           = acos $
               dotProd (normalise $ vectorSub (vx, 0, vz) (x, 0, z)) (1, 0, 0)
       in
-      case (vz > z) of
-          False -> (angle * 180 / pi)
-          True -> (360 - (angle * 180 / pi))
+      if (vz > z) then (360 - (angle * 180 / pi)) else (angle * 180 / pi)
 
 getVertAngle :: (Vec3, Vec3) -> Double
 getVertAngle ((x, y, z), (vx, vy, vz))
@@ -1212,7 +1206,7 @@ getVertAngle ((x, y, z), (vx, vy, vz))
 
 updateAnimSF :: AnimState -> SF (Double, Int) (Event (), AnimState)
 updateAnimSF iAnim
-  = (loop
+  = loop
        (arr
           (\ ((tme, animIndex), anim2) ->
              ((anim2, animIndex, tme), animIndex))
@@ -1229,13 +1223,13 @@ updateAnimSF iAnim
          (\ (anim2, animIndex, hasLooped) ->
             (case hasLooped of
                  True -> case (animIndex == dead1) of
-                             True -> (noEvent, anim2)
+                             True  -> (noEvent, anim2)
                              False -> (Event (), anim2)
-                 False -> (noEvent, anim2))))
+                 False -> (noEvent, anim2)))
 
 moves :: SF (Double, Camera) Camera
 moves
-  = (arr
+  = arr
        (\ (speed, cam) ->
           let (x, y, z) = (cpos cam)
               (vpx, vpy, vpz) = (viewPos cam)
@@ -1249,11 +1243,11 @@ moves
               newvz = (vz * speed)
             in
             Camera{cpos = (x + newx, y, z + newz),
-                   viewPos = (vpx + newvx, vpy, vpz + newvz), upVec = (upVec cam)}))
+                   viewPos = (vpx + newvx, vpy, vpz + newvz), upVec = (upVec cam)})
 
 strafes :: SF (Double, Camera) Camera
 strafes
-  = (arr
+  = arr
        (\ (speed, cam) ->
           let (sx, _, sz)
                 = normalise
@@ -1266,35 +1260,35 @@ strafes
               newvz = (sz * speed)
             in
             Camera{cpos = (x + newx, y, z + newz),
-                   viewPos = (vx + newvx, vy, vz + newvz), upVec = (upVec cam)}))
+                   viewPos = (vx + newvx, vy, vz + newvz), upVec = (upVec cam)})
 
 movementKS :: Double -> SF GameInput Double
 movementKS speed
-  = (keyStat >>>
+  = keyStat >>>
        loop
          (arr (\ (key, v) -> nextSpeed key v) >>>
-            (((iPre 0) <<< identity) >>> arr (\ v -> (v, v)))))
+            (((iPre 0) <<< identity) >>> arr (\ v -> (v, v))))
   where nextSpeed key v
           | key == Event ('w', True) = speed
           | key == Event ('s', True) = - speed
-          | (key == Event ('w', False) || key == Event ('s', False)) = 0
+          | key == Event ('w', False) || key == Event ('s', False) = 0
           | otherwise = v
 
 strafeKS :: Double -> SF GameInput Double
 strafeKS speed
-  = (keyStat >>>
+  = keyStat >>>
        loop
          (arr (\ (key, v) -> nextSpeed key v) >>>
-            (((iPre 0) <<< identity) >>> arr (\ v -> (v, v)))))
+            (((iPre 0) <<< identity) >>> arr (\ v -> (v, v))))
   where nextSpeed key v
           | key == Event ('d', True) = speed
           | key == Event ('a', True) = - speed
-          | (key == Event ('d', False) || key == Event ('a', False)) = 0
+          | key == Event ('d', False) || key == Event ('a', False) = 0
           | otherwise = v
 
 fallingp :: SF (Bool, GameInput) Double
 fallingp
-  = (arr (\ (lnd, gi) -> (gi, lnd)) >>>
+  = arr (\ (lnd, gi) -> (gi, lnd)) >>>
        (first keyStat >>> arr (\ (key, lnd) -> (key, (key, lnd)))) >>>
          (first (arr (\ key -> key == Event ('e', True)) >>> arr jump2Vel)
             >>> arr (\ (_, (key, lnd)) -> ((key, lnd), (key, lnd))))
@@ -1318,7 +1312,7 @@ fallingp
                                  of
                                    True -> True
                                    False -> case (lnd == True) of
-                                                True -> False
+                                                True  -> False
                                                 False -> middleOfJump)
                             >>> (iPre False <<< identity))
                          >>>
@@ -1343,11 +1337,11 @@ fallingp
                           (landed `tag` constant (- 5.0e-2))
                           `lMerge`
                           (notlanded `tag` falling' (- 200 :: Double) (0 :: Double)))))
-                 >>> drSwitch (falling' (- 200 :: Double) (0 :: Double)))
+                 >>> drSwitch (falling' (- 200 :: Double) (0 :: Double))
 
 falling' :: Double -> Double -> SF () Double
 falling' grav int
-  = (arr (\ () -> grav) >>> (integral >>> arr (\ vel -> (vel + int))) >>> integral)
+  = arr (\ () -> grav) >>> (integral >>> arr (\ vel -> (vel + int))) >>> integral
 
 bool2Ev :: Bool -> Event ()
 bool2Ev b
@@ -1356,5 +1350,5 @@ bool2Ev b
 
 jump2Vel :: Bool -> Double
 jump2Vel b
-  | b == True = 40
+  | b = 40
   | otherwise = 0
