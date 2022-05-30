@@ -62,15 +62,13 @@ rayTest bsp (x,y,z) vec2@(_,_,_) =
    v1 = vectorAdd vec2 (vectorMult (x1-x2,y1-y2,z1-z2) 45)
    v2 = vectorAdd vec2 (vectorMult (x1+x2,y1+y2,z1+z2) 45)
    v3 = vectorAdd vec2 (vectorMult (-x1-x2,-y1-y2,-z1-z2) 45)
-   in not (snd $ clipRay2 bsp vec2 (x,y,z) (0,0,0)) || (case (snd $ clipRay2 bsp v1 (x,y+30,z) (0,0,0)) of
-                                                          False -> True
-                                                          _ -> case (snd $ clipRay2 bsp v2 (x,y+30,z)(0,0,0)) of
-                                                                 False -> True
-                                                                 _ -> case (snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0)) of
-                                                                        False -> True
-                                                                        _ ->case(snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0))of
-                                                                                False -> True
-                                                                                True  -> False)
+   in not (snd $ clipRay2 bsp vec2 (x,y,z) (0,0,0)) || (if snd $ clipRay2 bsp v1 (x,y+30,z) (0,0,0) then (case (snd $ clipRay2 bsp v2 (x,y+30,z)(0,0,0)) of
+                                                                                                            False -> True
+                                                                                                            _ -> case (snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0)) of
+                                                                                                                   False -> True
+                                                                                                                   _ ->case(snd $ clipRay2 bsp v3 (x,y+30,z)(0,0,0))of
+                                                                                                                           False -> True
+                                                                                                                           True  -> False) else True)
 
 
 createSphere :: Double ->  CollisionType

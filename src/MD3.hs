@@ -370,7 +370,7 @@ updateTime lasttime currentframe nextframe anim presentTime =
         presentTimef = 1000*realToFrac presentTime
         elapsedtime  = presentTimef - lasttime
         t            = elapsedtime/animSpeed
-   in if (realToFrac elapsedtime) >= animSpeed then (t,presentTimef ,nextframe) else (t,lasttime,currentframe)
+   in if realToFrac elapsedtime >= animSpeed then (t,presentTimef ,nextframe) else (t,lasttime,currentframe)
 
 -------------------------------------------------------------------------------
 -- renders the model
@@ -503,7 +503,7 @@ readMD3Skin filepath = withBinaryFile filepath $ \handle -> do
             evaluate $ force contents
             let filteredStr =  words (replace contents)
             let files = findfiles (stripTags filteredStr)
-            if files == [] then return [] else return files
+            if null files then return [] else return files
 
 stripTags :: [String] -> [String]
 stripTags [] = []
@@ -524,7 +524,7 @@ readMD3Shader filepath = withBinaryFile filepath $ \handle -> do
    evaluate $ force contents
    let filteredStr =  words (replace contents)
    let files = fmap stripExt filteredStr
-   if files == [] then return [] else return files
+   if null files then return [] else return files
 
 
 
@@ -1122,7 +1122,7 @@ readAnimation line
     | null subStrings = do
                 return []
     | length subStrings >= 5 =
-          if elem (subStrings !! 4) animList then (do
+          if (subStrings !! 4) `elem` animList then (do
              let startF = (read $ head subStrings):: Int
              let numF   = (read $ subStrings!!1):: Int
              let loopF  = (read $ subStrings!!2):: Int

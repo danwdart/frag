@@ -45,7 +45,7 @@ renderHud gd playerState noos tme = do
           let dt = realToFrac(tme - lastTime3)/1000
           color $ Color4 255 255 255 (255 :: GLubyte)
           printFonts' 0 464 (fonts gd) 1 $
-                "framerate = " ++ show ((truncate ((1/dt) :: Double)) :: Int)
+                "framerate = " ++ show (truncate ((1/dt) :: Double) :: Int)
 
           --print the player's score
           printFonts' 0 448 (fonts gd) 1
@@ -70,7 +70,7 @@ renderHud gd playerState noos tme = do
           --print a message if the player has died
           Control.Monad.when (health playerState <= 0) $ do
                       color $ Color4 255 0 0 (255 :: GLubyte)
-                      printFonts' 210 240 (fonts gd) 1 ("Oh, botheration. You died.")
+                      printFonts' 210 240 (fonts gd) 1 "Oh, botheration. You died."
                       color $ Color4 255 255 255 (255 :: GLubyte)
 
 
@@ -220,32 +220,30 @@ renderEnemy camRef mdels frust bspmap OOSAICube {oosOldCubePos = (x,y,z),
    let frusTest = boxInFrustum frust
                               (vectorAdd (x,y,z) (-sx,-sy,-sz))
                               (vectorAdd (x,y,z) (sx,sy,sz))
-   case (frusTest) of
-      True -> do
-            -- a third check to see if a ray can be fired to
-            --the objects position without colliding
-            let rayVis = rayTest bspmap (cpos cam) (x,y,z)
-            case (rayVis) of
-                  False -> return()
-                  _ -> do
-                     unsafePreservingMatrix $ do
-                           lineWidth $= 5.0
-                           translate (Vector3 x y z)
-                           Just model <- HT.lookup mdels name
-                           writeIORef (pitch model)
-                              (Just $ do
-                                              cullFace $=  Nothing
-                                              cullFace $=  Just Front
-                                              (rotate p (Vector3 0 1 0)))
-                           writeIORef (lowerState model)  la
-                           writeIORef (upperState model)  ua
-                           currentColor $= Color4 (f*60) (f*60) (f*60) (1 :: Float)
-                           unsafePreservingMatrix $ do
-                              rotate ((-90) :: GLdouble) (Vector3 1 0 0)
-                              rotate (angle) (Vector3 0 0 1)
-                              translate (Vector3 (-10) 0 (-10 :: Double))
-                              scale 1.5 1.5 (1.5 :: GLfloat)
-                              drawModel (modelRef model,lowerState model)
-                           currentColor $= Color4 1 1 1 (1 :: Float)
-                           writeIORef (pitch model) Nothing
-      False -> return ()
+   (if frusTest then (do
+          -- a third check to see if a ray can be fired to
+          --the objects position without colliding
+          let rayVis = rayTest bspmap (cpos cam) (x,y,z)
+          case (rayVis) of
+                False -> return()
+                _ -> do
+                   unsafePreservingMatrix $ do
+                         lineWidth $= 5.0
+                         translate (Vector3 x y z)
+                         Just model <- HT.lookup mdels name
+                         writeIORef (pitch model)
+                            (Just $ do
+                                            cullFace $=  Nothing
+                                            cullFace $=  Just Front
+                                            (rotate p (Vector3 0 1 0)))
+                         writeIORef (lowerState model)  la
+                         writeIORef (upperState model)  ua
+                         currentColor $= Color4 (f*60) (f*60) (f*60) (1 :: Float)
+                         unsafePreservingMatrix $ do
+                            rotate ((-90) :: GLdouble) (Vector3 1 0 0)
+                            rotate (angle) (Vector3 0 0 1)
+                            translate (Vector3 (-10) 0 (-10 :: Double))
+                            scale 1.5 1.5 (1.5 :: GLfloat)
+                            drawModel (modelRef model,lowerState model)
+                         currentColor $= Color4 1 1 1 (1 :: Float)
+                         writeIORef (pitch model) Nothing) else return ())
